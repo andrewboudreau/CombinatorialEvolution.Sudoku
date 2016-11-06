@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using CombinatorialEvolution.Sudoku.Loggers;
 
 namespace CombinatorialEvolution.Sudoku
 {
@@ -36,7 +37,8 @@ namespace CombinatorialEvolution.Sudoku
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-
+            //loggerFactory.AddResponseHeaderLogger(app);
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
