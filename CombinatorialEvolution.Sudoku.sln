@@ -12,6 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CombinatorialEvolution.Sudoku", "src\CombinatorialEvolution.Sudoku\CombinatorialEvolution.Sudoku.xproj", "{DB79C62B-8DC8-4324-9C99-57772C4975FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CombinatorialEvolution.Sudoku.ConsoleApp", "CombinatorialEvolution.Sudoku.ConsoleApp\CombinatorialEvolution.Sudoku.ConsoleApp.csproj", "{93F03DD7-2EF3-48C6-8901-B56F64B8AAE2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleAppTests", "ConsoleAppTests\ConsoleAppTests.csproj", "{51067258-4DD2-46E6-AB7D-2DBFBDF491CE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,6 +26,14 @@ Global
 		{DB79C62B-8DC8-4324-9C99-57772C4975FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB79C62B-8DC8-4324-9C99-57772C4975FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB79C62B-8DC8-4324-9C99-57772C4975FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93F03DD7-2EF3-48C6-8901-B56F64B8AAE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93F03DD7-2EF3-48C6-8901-B56F64B8AAE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93F03DD7-2EF3-48C6-8901-B56F64B8AAE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93F03DD7-2EF3-48C6-8901-B56F64B8AAE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51067258-4DD2-46E6-AB7D-2DBFBDF491CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51067258-4DD2-46E6-AB7D-2DBFBDF491CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51067258-4DD2-46E6-AB7D-2DBFBDF491CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51067258-4DD2-46E6-AB7D-2DBFBDF491CE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
