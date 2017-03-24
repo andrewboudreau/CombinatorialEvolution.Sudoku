@@ -66,6 +66,82 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             }
 
             logger.LogDebug("Ending solving Sudoku");
+            Console.ReadKey();
+        }
+
+        public static int[][] Solve(int[][] problem, int numOrganisms, int maxEpochs, int maxRestarts)
+        {
+            var restarts = 0;
+            int[][] result = null;
+
+            while (restarts < maxRestarts)
+            {
+                result = SolveEvo(problem, numOrganisms, maxEpochs);
+                if (Error(result) == 0)
+                {
+                    break;
+                }
+
+                maxRestarts++;
+            }
+
+            return result;
+        }
+
+        public static int[][] SolveEvo(int[][] problem, int numOrganisms, int maxEpochs)
+        {
+            int numWorkers = (int)(numOrganisms * 0.90);
+            int numExplorer = numOrganisms - numWorkers;
+            Organism[] hive = new Organism[numOrganisms];
+
+            // initialize each Organism
+            for (var i = 0; i < numOrganisms; i++)
+            {
+                hive[i] = new Organism()
+                {
+                    Matrix = CreateMatrix(),
+                    Type = (--numWorkers) >= 0 ? 0 : 1
+                };
+            }
+
+            int epoch = 0;
+            while (epoch < maxEpochs)
+            {
+                for (int i = 0; i < numOrganisms; ++i)
+                {
+                    var organism = hive[i];
+
+                    // 0 worker, 1 explorer
+                    if (organism.Type == 0)
+                    {
+                        //process each organism
+                        var neighbor = NeighborMatrix(problem, organism.Matrix);
+                        if (Error(neighbor) <= Error(organism.Matrix) || rnd.Next(1000) < 2)
+                        {
+                            organism.Matrix = neighbor;
+                            organism.Age = 0;
+                        }
+                        else
+                        {
+                            organism.Age++;
+                        }
+                    }
+                    else
+                    {
+                        organism.Matrix = RandomMatrix(problem);
+                    }
+                }
+
+                var bestWorker = hive.Where(x => x.Type == 0).OrderBy(x => x.Error).First().Matrix;
+                var bestExplorer = hive.Where(x => x.Type == 1).OrderBy(x => x.Error).First().Matrix;
+
+                hive.OrderByDescending(x => x.Error).First().Matrix = MergeMatrices(bestWorker, bestExplorer);
+
+                // merge best worker with best explorer, incrememnt epoch
+                epoch++;
+            }
+
+            return hive.OrderBy(x => x.Error).First().Matrix;
         }
 
         private static void DisplayMatrix(int[][] problem)
@@ -225,61 +301,6 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
 
             return err;
         }
-
-        public static int[][] Solve(int[][] problem, int numOrganisms, int maxEpochs, int maxRestarts)
-        {
-            return new int[9][];
-        }
-
-        public static int[][] SolveEvo(int[][] problem, int numOrganisms, int maxEpochs)
-        {
-            int numWorkers = (int)(numOrganisms * 0.90);
-            int numExplorer = numOrganisms - numWorkers;
-            Organism[] hive = new Organism[numOrganisms];
-
-            // initialize each Organism
-            for (var i = 0; i < numOrganisms; i++)
-            {
-                hive[i] = new Organism()
-                {
-                    Matrix = CreateMatrix(),
-                    Type = (--numWorkers) >= 0 ? 0 : 1
-                };
-            }
-
-            int epoch = 0;
-            while (epoch < maxEpochs)
-            {
-                for (int i = 0; i < numOrganisms; ++i)
-                {
-                    var organism = hive[i];
-
-                    // 0 worker, 1 explorer
-                    if (organism.Type == 0)
-                    {
-                        //process each organism
-                        var neighbor = NeighborMatrix(problem, organism.Matrix);
-                        if (Error(neighbor) <= Error(organism.Matrix) || rnd.Next(1000) < 2)
-                        {
-                            organism.Matrix = neighbor;
-                            organism.Age = 0;
-                        }
-                        else
-                        {
-                            organism.Age++;
-                        }
-                    }
-                    else
-                    {
-
-                    }
-                }
-
-                // merge best worker with best explorer, incrememnt epoch
-            }
-
-            return hive.OrderBy(x => x.Error).First().Matrix;
-        }
     }
 
     public class Organism
@@ -295,7 +316,11 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
         public int[][] Matrix
         {
             get { return matrix; }
-            set { matrix = value; }
+            set
+            {
+                matrix = value;
+                Error = Program.Error(matrix);
+            }
         }
     }
 }
