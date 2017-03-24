@@ -1,9 +1,6 @@
-﻿using CombinatorialEvolution.Sudoku.ConsoleApp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CombinatorialEvolution.Sudoku.ConsoleApp
 {
@@ -31,18 +28,9 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             logger.LogDebug("Begining solving Sudoku");
             logger.LogDebug("The problem is: ");
 
-            int[][] problem = new int[9][];
-            problem[0] = new int[] { 0, 0, 6, 2, 0, 0, 0, 8, 0 };
-            problem[1] = new int[] { 0, 0, 8, 9, 7, 0, 0, 0, 0 };
-            problem[2] = new int[] { 0, 0, 4, 8, 1, 0, 5, 0, 0 };
-            problem[3] = new int[] { 0, 0, 0, 0, 6, 0, 0, 0, 2 };
-            problem[4] = new int[] { 0, 7, 0, 0, 0, 0, 0, 3, 0 };
-            problem[5] = new int[] { 6, 0, 0, 0, 5, 0, 0, 0, 0 };
-            problem[6] = new int[] { 0, 0, 2, 0, 4, 7, 1, 0, 0 };
-            problem[7] = new int[] { 0, 0, 3, 0, 2, 8, 4, 0, 0 };
-            problem[8] = new int[] { 0, 5, 0, 0, 0, 1, 2, 0, 0 };
-
-            //var foo = RandomMatrix(problem);
+            //int[][] problem = SudokuProblems.MsdnProblem;
+            //int[][] problem = SudokuProblems.ExtremeProblem_1;
+            int[][] problem = SudokuProblems.ExtremeProblem_2;
 
             DisplayMatrix(problem);
 
@@ -77,12 +65,14 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             while (restarts < maxRestarts)
             {
                 result = SolveEvo(problem, numOrganisms, maxEpochs);
-                if (Error(result) == 0)
+                var err = Error(result);
+                if (err == 0)
                 {
                     break;
                 }
 
-                maxRestarts++;
+                logger.LogDebug($"Restarting {restarts}, Best Solution has {err}");
+                restarts++;
             }
 
             return result;
@@ -132,13 +122,22 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
                     }
                 }
 
+                // merge best worker with best explorer, incrememnt epoch
                 var bestWorker = hive.Where(x => x.Type == 0).OrderBy(x => x.Error).First().Matrix;
                 var bestExplorer = hive.Where(x => x.Type == 1).OrderBy(x => x.Error).First().Matrix;
 
                 hive.OrderByDescending(x => x.Error).First().Matrix = MergeMatrices(bestWorker, bestExplorer);
+                if (hive.Any(x => x.Error == 0))
+                {
+                    break;
+                }
 
-                // merge best worker with best explorer, incrememnt epoch
                 epoch++;
+
+                if (epoch % 1000 == 0)
+                {
+                    logger.LogDebug($"Epoch {epoch} of {maxEpochs}");
+                }
             }
 
             return hive.OrderBy(x => x.Error).First().Matrix;
@@ -152,9 +151,14 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
                 return;
             }
 
+            logger.LogDebug(string.Empty);
             for (var row = 0; row < problem.Length; row++)
             {
-                logger.LogDebug(string.Join(", ", problem[row]));
+                logger.LogDebug($"{problem[row][0]},{problem[row][1]},{problem[row][2]}  {problem[row][3]},{problem[row][4]},{problem[row][5]}  {problem[row][6]},{problem[row][7]},{problem[row][8]}");
+                if ((row + 1) % 3 == 0)
+                {
+                    logger.LogDebug(string.Empty);
+                }
             }
         }
 
