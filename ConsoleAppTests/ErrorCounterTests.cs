@@ -14,7 +14,7 @@ namespace ConsoleAppTests
         [TestMethod]
         public void Expect72ErrorsWithCountedBlocks()
         {
-            var matrix = Program.CreateMatrix();
+            var matrix = MatrixExtensions.CreateMatrix();
             CountedBlocks(matrix);
 
             var errors = Program.Error(matrix);
@@ -24,7 +24,7 @@ namespace ConsoleAppTests
         [TestMethod]
         public void Expect144ErrorsWithAllOnes()
         {
-            var matrix = Program.CreateMatrix();
+            var matrix = MatrixExtensions.CreateMatrix();
             AllToGivenValue(matrix, 1);
 
             var errors = Program.Error(matrix);
@@ -42,7 +42,7 @@ namespace ConsoleAppTests
         public void TwoErrors()
         {
             // Arrange
-            var problem = Program.CopyMatrix(Problems.NonEasyProblem_Solution);
+            var problem = MatrixExtensions.Duplicate(Problems.NonEasyProblem_Solution);
             problem[0][0] = 1;
 
             // Act
@@ -56,7 +56,7 @@ namespace ConsoleAppTests
         public void AllValuesMissing()
         {
             // Arrange
-            var matrix = Program.CreateMatrix();
+            var matrix = MatrixExtensions.CreateMatrix();
             AllToGivenValue(matrix, 0);
 
             // Act

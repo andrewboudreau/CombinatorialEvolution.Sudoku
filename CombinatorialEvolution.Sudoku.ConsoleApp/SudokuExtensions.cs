@@ -5,6 +5,11 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
 {
     public static class SudokuExtensions
     {
+        /// <summary>
+        /// Gets a <see cref="List{int[][]}">row and column coordinates</see> for the cells in the given <paramref name="block"/>.
+        /// </summary>
+        /// <param name="block">A value from 0 to 8 indexing the blocks a matrix.</param>
+        /// <returns>A collection of row and column pairs</returns>
         public static int[][] GetBlockIndexes(int block)
         {
             int row, col;
@@ -72,14 +77,22 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
         }
 
         /// <summary>
-        /// Returns the value at a given index in teh matrix k
+        /// Returns the value at a given index in the matrix
         /// </summary>
-        /// <param name="matrix"></param>
-        /// <param name="coordinates"></param>
-        /// <returns></returns>
+        /// <param name="coordinates">Row and column to query</param>
+        /// <returns>Value of the cell</returns>
         public static int ValueForIndex(this int[][] matrix, int[] coordinates)
         {
-            return matrix[coordinates[0]][coordinates[1]];
+            return ValueForIndex(matrix, coordinates[0], coordinates[1]);
+        }
+        
+        /// <summary>
+         /// Returns the value at a given index in the matrix
+         /// </summary>
+         /// <returns>Value of the cell</returns>
+        public static int ValueForIndex(this int[][] matrix, int row, int col)
+        {
+            return matrix[row][col];
         }
 
         /// <summary>
@@ -102,6 +115,5 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
 
             return result.ToArray();
         }
-        
     }
 }

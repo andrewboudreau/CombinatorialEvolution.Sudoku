@@ -4,18 +4,6 @@ using System.Linq;
 
 namespace CombinatorialEvolution.Sudoku.ConsoleApp
 {
-    public interface ILogger
-    {
-        void LogDebug(string msg);
-    }
-
-    public class ConsoleLogger : ILogger
-    {
-        public void LogDebug(string msg)
-        {
-            Console.WriteLine(msg);
-        }
-    }
 
     public class Program
     {
@@ -25,12 +13,16 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
 
         static void Main(string[] args)
         {
+            SolveWithDefaultSettingsAndOutputDefaultSettings(SudokuProblems.ExtremeProblem_1);
+            SolveWithDefaultSettingsAndOutputDefaultSettings(SudokuProblems.ExtremeProblem_2);
+            SolveWithDefaultSettingsAndOutputDefaultSettings(SudokuProblems.MsdnProblem);
+            Console.ReadKey();
+        }
+
+        public static void SolveWithDefaultSettingsAndOutputDefaultSettings(int[][] problem)
+        {
             logger.LogDebug("Begining solving Sudoku");
             logger.LogDebug("The problem is: ");
-
-            //int[][] problem = SudokuProblems.MsdnProblem;
-            //int[][] problem = SudokuProblems.ExtremeProblem_1;
-            int[][] problem = SudokuProblems.ExtremeProblem_2;
 
             DisplayMatrix(problem);
 
@@ -54,9 +46,16 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             }
 
             logger.LogDebug("Ending solving Sudoku");
-            Console.ReadKey();
         }
 
+        /// <summary>
+        /// Allows the problem to run multiple times if no 
+        /// </summary>
+        /// <param name="problem"></param>
+        /// <param name="numOrganisms"></param>
+        /// <param name="maxEpochs"></param>
+        /// <param name="maxRestarts"></param>
+        /// <returns></returns>
         public static int[][] Solve(int[][] problem, int numOrganisms, int maxEpochs, int maxRestarts)
         {
             var restarts = 0;
@@ -78,6 +77,13 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             return result;
         }
 
+        /// <summary>
+        /// Iterates the evolutionary steps of a set
+        /// </summary>
+        /// <param name="problem">Sudoku problem</param>
+        /// <param name="numOrganisms">Number of organisms used to solve the set</param>
+        /// <param name="maxEpochs">max number of evolutions before giving up</param>
+        /// <returns></returns>
         public static int[][] SolveEvo(int[][] problem, int numOrganisms, int maxEpochs)
         {
             int numWorkers = (int)(numOrganisms * 0.90);
@@ -89,8 +95,8 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             {
                 hive[i] = new Organism()
                 {
-                    Matrix = CreateMatrix(),
-                    Type = (--numWorkers) >= 0 ? 0 : 1
+                    Matrix = MatrixExtensions.CreateMatrix(),
+                    OrganismType = (--numWorkers) >= 0 ? OrganismType.Worker : OrganismType.Explorer
                 };
             }
 
@@ -102,9 +108,8 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
                     var organism = hive[i];
 
                     // 0 worker, 1 explorer
-                    if (organism.Type == 0)
+                    if (organism.OrganismType == OrganismType.Worker)
                     {
-                        //process each organism
                         var neighbor = NeighborMatrix(problem, organism.Matrix);
                         if (Error(neighbor) <= Error(organism.Matrix) || rnd.Next(1000) < 2)
                         {
@@ -123,10 +128,15 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
                 }
 
                 // merge best worker with best explorer, incrememnt epoch
-                var bestWorker = hive.Where(x => x.Type == 0).OrderBy(x => x.Error).First().Matrix;
-                var bestExplorer = hive.Where(x => x.Type == 1).OrderBy(x => x.Error).First().Matrix;
+                var bestWorkers = hive.Where(x => x.OrganismType == OrganismType.Worker).OrderBy(x => x.Error).ToList();
+                var bestExplorers = hive.Where(x => x.OrganismType == OrganismType.Explorer).OrderBy(x => x.Error).ToList();
+                var worstOfHive = hive.OrderByDescending(x => x.Error).ToList();
 
-                hive.OrderByDescending(x => x.Error).First().Matrix = MergeMatrices(bestWorker, bestExplorer);
+                for (var i = 0; i < 20; i++)
+                {
+                    worstOfHive.ElementAt(i).Matrix = MergeMatrices(bestWorkers.ElementAt(i).Matrix, bestExplorers.ElementAt(i).Matrix);
+                }
+
                 if (hive.Any(x => x.Error == 0))
                 {
                     break;
@@ -143,58 +153,17 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             return hive.OrderBy(x => x.Error).First().Matrix;
         }
 
-        private static void DisplayMatrix(int[][] problem)
-        {
-            if (problem == null || problem.Any(x => x == null))
-            {
-                logger.LogDebug("null matrix displayed");
-                return;
-            }
-
-            logger.LogDebug(string.Empty);
-            for (var row = 0; row < problem.Length; row++)
-            {
-                logger.LogDebug($"{problem[row][0]},{problem[row][1]},{problem[row][2]}  {problem[row][3]},{problem[row][4]},{problem[row][5]}  {problem[row][6]},{problem[row][7]},{problem[row][8]}");
-                if ((row + 1) % 3 == 0)
-                {
-                    logger.LogDebug(string.Empty);
-                }
-            }
-        }
-
-        public static int[][] CopyMatrix(int[][] source)
-        {
-            var destination = CreateMatrix();
-            CopyMatrix(source, destination);
-            return destination;
-        }
-
-        public static void CopyMatrix(int[][] source, int[][] destination)
-        {
-            for (var row = 0; row < source.Length; row++)
-            {
-                for (var column = 0; column < source[row].Length; column++)
-                {
-                    destination[row][column] = source[row][column];
-                }
-            }
-        }
-
-        public static int[][] CreateMatrix()
-        {
-            int[][] result = new int[9][];
-            for (var row = 0; row < 9; row++)
-            {
-                result[row] = new int[9];
-            }
-
-            return result;
-        }
-
+        /// <summary>
+        /// Creates a new matrix by first randomly selecting a block from <paramref name="matrix"/> then swapping to non-fixed cell values.
+        /// </summary>
+        /// <param name="problem">Sudoku problem used for referencing initial start values</param>
+        /// <param name="matrix">Matrix to swap neighbors</param>
+        /// <returns>A new matrix with swapped neighbors</returns>
         public static int[][] NeighborMatrix(int[][] problem, int[][] matrix)
         {
-            var result = CopyMatrix(matrix);
-            var indexes = SudokuExtensions.GetBlockIndexes(rnd.Next(0, 9));
+            var block = rnd.Next(0, 8);
+            var result = matrix.Duplicate();
+            var indexes = SudokuExtensions.GetBlockIndexes(block);
 
             // determine two cells in the same block that don't contain a fixed value
             int[][] swaps = indexes
@@ -216,9 +185,13 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             return result;
         }
 
+        /// <summary>
+        /// Creates a new matrix by randomly copying blocks from <param name="m1">Matrix 1</param> and <param name="m2">Matrix 2</param>.
+        /// </summary>
+        /// <returns>A new matrix containing blocks from both inputs</returns>
         public static int[][] MergeMatrices(int[][] m1, int[][] m2)
         {
-            var result = CopyMatrix(m1);
+            var result = m1.Duplicate();
             for (var i = 0; i < 9; ++i)
             {
                 if (rnd.NextDouble() > 0.5)
@@ -241,7 +214,7 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
         /// <returns>a fully populated matrix where all 3x3 cells are in a valid state</returns>
         public static int[][] RandomMatrix(int[][] matrix)
         {
-            var result = CopyMatrix(matrix);
+            var result = matrix.Duplicate();
             for (int block = 0; block < 9; ++block)
             {
                 var valuesInBlock = result.GetBlock(block).Where(x => x != 0).ToArray();
@@ -267,6 +240,11 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
             return result;
         }
 
+        /// <summary>
+        /// Counts the Errors in a sudoku problem
+        /// </summary>
+        /// <param name="matrix">Sudoku problem to inspect</param>
+        /// <returns>The number of errors found</returns>
         public static int Error(int[][] matrix)
         {
             var err = 0;
@@ -305,26 +283,56 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
 
             return err;
         }
+
+        /// <summary>
+        /// Prints the given sudoku problem
+        /// </summary>
+        /// <param name="problem">The sudoku problem to print</param>
+        private static void DisplayMatrix(int[][] problem)
+        {
+            if (problem == null || problem.Any(x => x == null))
+            {
+                logger.LogDebug("null matrix displayed");
+                return;
+            }
+
+            logger.LogDebug(string.Empty);
+            for (var row = 0; row < problem.Length; row++)
+            {
+                logger.LogDebug($"{CellDisplayValue(problem, row, 0)}, {CellDisplayValue(problem, row, 1)},{CellDisplayValue(problem, row, 2)}  {CellDisplayValue(problem, row, 3)},{CellDisplayValue(problem, row, 4)},{CellDisplayValue(problem, row, 5)}  {CellDisplayValue(problem, row, 6)},{CellDisplayValue(problem, row, 7)},{CellDisplayValue(problem, row, 8)}");
+                if ((row + 1) % 3 == 0)
+                {
+                    logger.LogDebug(string.Empty);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Helper function for printing empty cells.
+        /// </summary>
+        private static string CellDisplayValue(int[][] problem, int row, int col)
+        {
+            var value = problem.ValueForIndex(row, col);
+            if (value == 0)
+            {
+                return "_";
+            }
+
+            return value.ToString();
+        }
+
     }
 
-    public class Organism
+    public interface ILogger
     {
-        private int[][] matrix;
+        void LogDebug(string msg);
+    }
 
-        public int Age { get; set; }
-
-        public int Type { get; set; }// 0 worker, 1 explorer
-
-        public int Error { get; set; }
-
-        public int[][] Matrix
+    public class ConsoleLogger : ILogger
+    {
+        public void LogDebug(string msg)
         {
-            get { return matrix; }
-            set
-            {
-                matrix = value;
-                Error = Program.Error(matrix);
-            }
+            Console.WriteLine(msg);
         }
     }
 }
