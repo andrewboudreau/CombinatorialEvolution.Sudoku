@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="HiveExtensions.cs" />
     <Compile Include="MatrixExtensions.cs" />
+    <Compile Include="old_program.cs" />
     <Compile Include="Organism.cs" />
     <Compile Include="OrganismType.cs" />
     <Compile Include="SudokuProblems.cs" />

@@ -76,6 +76,92 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
 
             return result;
         }
+        public static void CopyMatrix(int[][] source, int[][] destination)
+        {
+            for (var row = 0; row < source.Length; row++)
+            {
+                for (var column = 0; column < source[row].Length; column++)
+                {
+                    destination[row][column] = source[row][column];
+                }
+            }
+        }
+
+        public static int[][] CreateMatrix()
+        {
+            int[][] result = new int[9][];
+            for (var row = 0; row < 9; row++)
+            {
+                result[row] = new int[9];
+            }
+
+            return result;
+        }
+
+        public static int[][] SolveEvo(int[][] problem, int numOrganisms, int maxEpochs)
+        {
+            int numWorkers = (int)(numOrganisms * 0.90);
+            int numExplorer = numOrganisms - numWorkers;
+            Organism[] hive = new Organism[numOrganisms];
+
+            // initialize each Organism
+            for (var i = 0; i < numOrganisms; i++)
+            {
+                hive[i] = new Organism()
+                {
+                    Matrix = CreateMatrix(),
+                    Type = (--numWorkers) >= 0 ? 0 : 1
+                };
+            }
+
+            int epoch = 0;
+            while (epoch < maxEpochs)
+            {
+                for (int i = 0; i < numOrganisms; ++i)
+                {
+                    var organism = hive[i];
+
+                    // 0 worker, 1 explorer
+                    if (organism.Type == 0)
+                    {
+                        //process each organism
+                        var neighbor = NeighborMatrix(problem, organism.Matrix);
+                        if (Error(neighbor) <= Error(organism.Matrix) || rnd.Next(1000) < 2)
+                        {
+                            organism.Matrix = neighbor;
+                            organism.Age = 0;
+                        }
+                        else
+                        {
+                            organism.Age++;
+                        }
+                    }
+                    else
+                    {
+                        organism.Matrix = RandomMatrix(problem);
+                    }
+                }
+
+                // merge best worker with best explorer, incrememnt epoch
+                var bestWorker = hive.Where(x => x.Type == 0).OrderBy(x => x.Error).First().Matrix;
+                var bestExplorer = hive.Where(x => x.Type == 1).OrderBy(x => x.Error).First().Matrix;
+
+                hive.OrderByDescending(x => x.Error).First().Matrix = MergeMatrices(bestWorker, bestExplorer);
+                if (hive.Any(x => x.Error == 0))
+                {
+                    break;
+                }
+
+                epoch++;
+
+                if (epoch % 1000 == 0)
+                {
+                    logger.LogDebug($"Epoch {epoch} of {maxEpochs}");
+                }
+            }
+
+            return hive.OrderBy(x => x.Error).First().Matrix;
+        }
 
         /// <summary>
         /// Iterates the evolutionary steps of a set
@@ -84,7 +170,7 @@ namespace CombinatorialEvolution.Sudoku.ConsoleApp
         /// <param name="numOrganisms">Number of organisms used to solve the set</param>
         /// <param name="maxEpochs">max number of evolutions before giving up</param>
         /// <returns></returns>
-        public static int[][] SolveEvo(int[][] problem, int numOrganisms, int maxEpochs)
+        public static int[][] SolveEvoNew(int[][] problem, int numOrganisms, int maxEpochs)
         {
             int numWorkers = (int)(numOrganisms * 0.90);
             int numExplorer = numOrganisms - numWorkers;

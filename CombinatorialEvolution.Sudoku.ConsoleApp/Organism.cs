@@ -5,7 +5,9 @@
         private int[][] matrix;
 
         public int Age { get; set; }
-        
+
+        public int Type{ get; set; }
+
         public OrganismType OrganismType { get; set; }
 
         public int Error { get; set; }
